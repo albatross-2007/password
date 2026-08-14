@@ -416,6 +416,7 @@ export default function RegistrationPage() {
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                   <p className="font-semibold text-yellow-800">🔒 Important Notes</p>
                   <ul className="list-disc ml-5 mt-1 space-y-1 text-yellow-700">
+                    <li>If you forget Your Password, Reset Password By Same Process</li>
                     <li>Use only your official college email ID.</li>
                     <li>Do not share your OTP or password with anyone.</li>
                     <li>This password will be used to access your student portal.</li>

@@ -22,7 +22,7 @@ A Next.js 16 web application that lets SXCCE students create their student-porta
 | Framework | Next.js 16 (App Router, TypeScript) |
 | Styling | Tailwind CSS v4 |
 | Database | MongoDB Atlas (free M0 tier) via Mongoose |
-| Email | **Resend** (free tier — 3,000 emails/month) |
+| Email | **Brevo** (free SMTP relay — 300 emails/day, lifetime free) |
 | Password hashing | bcryptjs (cost 12) |
 
 ---
@@ -46,15 +46,16 @@ npm install
    mongodb+srv://user:pass@cluster0.xxxxx.mongodb.net/sxcce?retryWrites=true&w=majority
    ```
 
-### 3. Set up Resend email (free — 3,000 emails/month)
+### 3. Set up Brevo email (free — 300 emails/day, lifetime)
 
-> Resend is the recommended email service for this project.  
-> It provides **3,000 emails / month** on the free tier — enough for  
-> typical OTP sending volumes.
+> Brevo is the recommended free email service for this project.  
+> It supports **300 emails / day** with **unlimited contacts** — enough for  
+> 2,000 – 3,000 students receiving daily OTP emails, **forever free**.
 
-1. Register at <https://resend.com/signup> (no credit card needed).
-2. Add and verify your sending domain under **Domains**.
-3. Navigate to **API Keys** → **Create API Key** and copy the key.
+1. Register at <https://app.brevo.com/account/register> (no credit card needed).
+2. Navigate to **Settings → SMTP & API → SMTP** tab.
+3. Click **"Generate a new SMTP key"** and copy the key shown.
+4. Note your **Brevo login email** (used as the SMTP username).
 
 ### 4. Configure environment variables
 
@@ -68,9 +69,13 @@ Edit `.env.local`:
 # MongoDB Atlas
 MONGODB_URI=mongodb+srv://user:pass@cluster0.xxxxx.mongodb.net/sxcce?retryWrites=true&w=majority
 
-# Resend (https://resend.com)
-RESEND_API_KEY=re_your_api_key_here
-EMAIL_FROM=noreply@yourdomain.com
+# Brevo SMTP (free — 300 emails/day, lifetime)
+EMAIL_HOST=smtp-relay.brevo.com
+EMAIL_PORT=587
+EMAIL_SECURE=false
+EMAIL_USER=your-brevo-login@example.com   # your Brevo account email
+EMAIL_PASS=your-brevo-smtp-key            # the SMTP key from step 3.3 above
+EMAIL_FROM=noreply@sxcce.edu.in
 ```
 
 ### 5. Run locally
@@ -99,7 +104,7 @@ app/
   layout.tsx            — root layout + metadata
   globals.css           — Tailwind base styles
   api/
-    send-otp/route.ts   — validate email/rollno, send OTP via Resend
+    send-otp/route.ts   — validate email/rollno, send OTP via Brevo SMTP
     verify-otp/route.ts — verify 6-digit OTP (single-use, 5-min TTL)
     set-password/route.ts — hash & store password in MongoDB
 lib/

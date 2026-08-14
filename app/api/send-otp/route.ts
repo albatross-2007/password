@@ -1,21 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 import { isRateLimited, generateOtp, storeOtp } from "@/lib/otp-store";
 import { checkRateLimit } from "@/lib/rate-limit";
 
-// Cache the Resend client at module level so the instance is reused across requests.
-let _resend: Resend | null = null;
-function getResend(): Resend {
-  if (!_resend) {
-    if (!process.env.RESEND_API_KEY) {
-      throw new Error("RESEND_API_KEY environment variable is not set.");
-    }
-    if (!process.env.EMAIL_FROM) {
-      throw new Error("EMAIL_FROM environment variable is not set.");
-    }
-    _resend = new Resend(process.env.RESEND_API_KEY);
+// Cache the transporter at module level so the SMTP connection pool is reused
+// across requests instead of opening a new TCP+TLS connection every time.
+let _transporter: nodemailer.Transporter | null = null;
+function getTransporter(): nodemailer.Transporter {
+  if (!_transporter) {
+    // EMAIL_SECURE=true  → implicit TLS on port 465 (some third-party SMTP relays)
+    // EMAIL_SECURE=false → STARTTLS on port 587 (Brevo, Office 365 SMTP AUTH)
+    const secure = process.env.EMAIL_SECURE === "true";
+    _transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST,
+      port: Number(process.env.EMAIL_PORT ?? 587),
+      secure,
+      // When using implicit TLS (secure=true) the connection is already
+      // encrypted from the start, so requireTLS is not needed.
+      // When using STARTTLS (secure=false) requireTLS=true forces the
+      // connection to upgrade; the send fails if the server won't upgrade.
+      requireTLS: !secure,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+      tls: {
+        minVersion: "TLSv1.2",
+        rejectUnauthorized: true,
+      },
+    });
   }
-  return _resend;
+  return _transporter;
 }
 
 const EMAIL_REGEX = /^[a-z]+\.(\d+)@sxcce\.edu\.in$/i;
@@ -73,8 +88,8 @@ export async function POST(req: NextRequest) {
     // --- Generate OTP (not yet stored) & send email ---
     const otp = generateOtp();
 
-    await getResend().emails.send({
-      from: `SXCCE Account Portal <${process.env.EMAIL_FROM}>`,
+    await getTransporter().sendMail({
+      from: `"SXCCE Account Portal" <${process.env.EMAIL_FROM ?? process.env.EMAIL_USER}>`,
       to: email,
       subject: "Your OTP for Account Registration",
       html: `
