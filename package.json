@@ -14,14 +14,13 @@
     "ioredis": "^5.10.0",
     "mongoose": "^9.2.2",
     "next": "^16.2.4",
-    "nodemailer": "^9.0.3",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "resend": "^6.21.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
-    "@types/nodemailer": "^8.0.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
